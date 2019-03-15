@@ -1,6 +1,7 @@
 import os
 import logging
 import csv
+import pyodbc
 
 logger = logging.getLogger("validatecsvfileloadtoDB")
 logger.setLevel(logging.DEBUG)
@@ -20,6 +21,15 @@ logger.addHandler(ch)
 
 
 def processfile(fpath, filedelimilter, header):
+    # server = 'server-name'
+    # database = 'db-name'
+    # username = 'uname'
+    # password = 'password'
+    # driver = '{ODBC Driver 13 for SQL Server}'
+    #
+    # cnxn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';PORT=1433;DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
+    # cursor = cnxn.cursor()
+
     # verify if the directory exits
     try:
         os.chdir(fpath)
@@ -31,6 +41,7 @@ def processfile(fpath, filedelimilter, header):
                 if header:  # skip the header
                     next(delimitedfile)
                 for i, row in enumerate(delimitedfile):
+                    i = i + 1
                     if "'" in row[5]:
                         row[5] = row[5].replace("'", "''")  # if there is a '(single quote) in the string replace it so that query does not fail
                     query = "select * from Customers " \
@@ -42,7 +53,15 @@ def processfile(fpath, filedelimilter, header):
                         "[Gender]='" + row[4].strip() + "' and " \
                         "[Address]='" + row[5].strip() + "' and " \
                         "[PhoneNum]='" + row[6].strip()
-                    logger.info(query)
+                    logger.error("Unprocessed Record LineNum: {}, FileName: {} -- sql: {}".format(i, f, query))
+                    # logger.info(query)
+                    # cursor.execute(query)
+                    # datarow = cursor.fetchone()
+                    # if datarow:
+                    #     if i % 10 == 0:
+                    #         logger.info("Processed Records: {}".format(i))
+                    # else:
+                    #     logger.error("Unprocessed Records: {} -- sql: {}".format(i, query))
 
     except FileNotFoundError:
         logger.error("Invalid file path: {}".format(fpath))

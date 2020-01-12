@@ -1,9 +1,20 @@
+#!/usr/bin/env python3
+##########################################################################################################################
+# Author: Gautham Maroli
+# Pre-requisite: Copy all the files (same type) under one directory
+# Description: Script is used to verify that all the records in a delimited file is loaded successfully into the DB
+#               Reads the contents of every file line by line
+#               Generates a SQL : select query : Depends of the Table used
+#               And returns success or failure
+#               In case of Failure- It returns the File Name - Line number in the file 
+#                   and the generated SQL query which can be used for further investigation
+##########################################################################################################################
 import os
 import logging
 import csv
 import pyodbc
 
-logger = logging.getLogger("validatecsvfileloadtoDB")
+logger = logging.getLogger("DBFileloadCheckinDB")
 logger.setLevel(logging.DEBUG)
 
 # create file handler which logs even debug messages
@@ -21,14 +32,14 @@ logger.addHandler(ch)
 
 
 def processfile(fpath, filedelimilter, header):
-    # server = 'server-name'
-    # database = 'db-name'
-    # username = 'uname'
-    # password = 'password'
-    # driver = '{ODBC Driver 13 for SQL Server}'
-    #
-    # cnxn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';PORT=1433;DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
-    # cursor = cnxn.cursor()
+    server = 'server-name'
+    database = 'db-name'
+    username = 'db-useruname'
+    password = 'db-password'
+    driver = '{ODBC Driver 13 for SQL Server}'
+    
+    cnxn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';PORT=1433;DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
+    cursor = cnxn.cursor()
 
     # verify if the directory exits
     try:
@@ -54,14 +65,14 @@ def processfile(fpath, filedelimilter, header):
                         "[Address]='" + row[5].strip() + "' and " \
                         "[PhoneNum]='" + row[6].strip()
                     logger.error("Unprocessed Record LineNum: {}, FileName: {} -- sql: {}".format(i, f, query))
-                    # logger.info(query)
-                    # cursor.execute(query)
-                    # datarow = cursor.fetchone()
-                    # if datarow:
-                    #     if i % 10 == 0:
-                    #         logger.info("Processed Records: {}".format(i))
-                    # else:
-                    #     logger.error("Unprocessed Records: {} -- sql: {}".format(i, query))
+                    logger.info(query)
+                    cursor.execute(query)
+                    datarow = cursor.fetchone()
+                    if datarow:
+                        if i % 10 == 0:  # This value can be changed if the file has more records
+                            logger.info("Processed Records: {}".format(i))
+                    else:
+                        logger.error("Unprocessed Records: {} -- sql: {}".format(i, query))
 
     except FileNotFoundError:
         logger.error("Invalid file path: {}".format(fpath))
